@@ -14,7 +14,7 @@ fn main() {
         error!("程序已经在运行中");
         return;
     }
-    info!("staring...");
+    info!("starting...");
     // 启动 Web 服务器
     server::main::run(); // use server::main::run;
     client::main::run(); // 启动客户端程序
