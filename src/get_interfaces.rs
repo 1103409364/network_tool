@@ -68,7 +68,7 @@ async fn get_interfaces() -> impl Responder {
 
 /// 查找可用的端口
 /// 返回一个可用的端口号，如果没有可用的端口则返回 None
-fn find_available_port() -> Option<u16> {
+pub fn find_available_port() -> Option<u16> {
     for port in 8080..9000 {
         // TcpListener::bind 创建的 TcpListener 对象在离开作用域时会自动被 drop，从而释放占用的端口。因此，我们不需要显式地调用 drop。
         match TcpListener::bind(("127.0.0.1", port)) {
@@ -81,16 +81,22 @@ fn find_available_port() -> Option<u16> {
 
 // 程序入口点
 #[actix_web::main]
-async fn get_interfaces() -> std::io::Result<()> {
+async fn start_web_server() -> std::io::Result<()> {
     let port = find_available_port().expect("No available ports found");
     println!("Starting server at http://127.0.0.1:{}", port);
 
-    // 创建并启动 HTTP 服务器
     HttpServer::new(|| {
         App::new()
-            .service(get_interfaces)  // 注册 /interfaces 端点
+            .service(get_interfaces)
     })
-    .bind(("127.0.0.1", port))?     // 绑定到本地端口
-    .run()                          // 运行服务器
+    .bind(("127.0.0.1", port))?
+    .run()
     .await
+}
+
+// 导出这个函数供 main.rs 使用
+pub fn launch_web_server() {
+    std::thread::spawn(|| {
+        start_web_server().unwrap();
+    });
 }

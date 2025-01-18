@@ -1,12 +1,16 @@
 #![windows_subsystem = "windows"]
 
+use image::io::Reader as ImageReader;
+use single_instance;
 use std::sync::Arc;
 use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
     Icon, TrayIconBuilder,
 };
-use image::io::Reader as ImageReader;
-use single_instance;
+
+// 添加模块引用
+mod get_interfaces;
+use get_interfaces::launch_web_server;
 
 fn main() {
     // 确保程序单例运行
@@ -18,6 +22,7 @@ fn main() {
 
     // 创建托盘菜单
     let tray_menu = Menu::new();
+
     let quit_item = MenuItem::new("退出", true, None);
     let quit_id = quit_item.id().clone();
     tray_menu.append(&quit_item).unwrap();
@@ -30,11 +35,7 @@ fn main() {
         .decode()
         .unwrap();
     let rgba = image.into_rgba8();
-    let icon = Icon::from_rgba(
-        rgba.as_raw().to_vec(),
-        rgba.width(),
-        rgba.height()
-    ).unwrap();
+    let icon = Icon::from_rgba(rgba.as_raw().to_vec(), rgba.width(), rgba.height()).unwrap();
 
     let tray_icon = TrayIconBuilder::new()
         .with_icon(icon)
@@ -48,7 +49,10 @@ fn main() {
 
     // 创建事件循环
     let event_loop = winit::event_loop::EventLoop::new();
-    
+
+    // 启动 web 服务器
+    launch_web_server();
+
     // 处理菜单事件
     let menu_channel = MenuEvent::receiver();
     let running = Arc::new(std::sync::atomic::AtomicBool::new(true));
