@@ -81,7 +81,7 @@ pub fn run() {
             }
         }
     });
-
+    // TODO: server 退出是否需要单独处理？windows 点击退出后整个进程退出，依赖操作系统行为？
     // 运行主事件循环
     event_loop.run(move |_event, _, control_flow| {
         // 设置事件循环为等待模式，减少 CPU 使用
