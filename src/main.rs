@@ -4,7 +4,7 @@ use chrono::Local;
 use image::io::Reader as ImageReader;
 use log::{error, info};
 use simplelog::*;
-use single_instance;
+use single_instance::SingleInstance;
 use std::fs::{self, File};
 use std::path::Path;
 use std::sync::Arc;
@@ -12,10 +12,11 @@ use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
     Icon, TrayIconBuilder,
 };
+use winit::event_loop::EventLoop;
 
 // 添加模块引用
-mod get_interfaces;
-use get_interfaces::launch_web_server;
+mod web_server;
+use web_server::launch_web_server;
 
 fn main() {
     // 创建 log 目录
@@ -42,7 +43,7 @@ fn main() {
     .unwrap();
 
     // 确保程序单例运行
-    let instance = single_instance::SingleInstance::new("2eHYAHYbarsMt3f").unwrap();
+    let instance = SingleInstance::new("2eHYAHYbarsMt3f").unwrap();
     if !instance.is_single() {
         error!("程序已经在运行中");
         return;
@@ -76,7 +77,7 @@ fn main() {
     let _tray_icon = Arc::new(tray_icon);
 
     // 创建事件循环
-    let event_loop = winit::event_loop::EventLoop::new();
+    let event_loop = EventLoop::new();
 
     // 启动 web 服务器
     info!("Starting...");
@@ -99,7 +100,7 @@ fn main() {
     // 运行事件循环
     event_loop.run(move |_event, _, control_flow| {
         *control_flow = winit::event_loop::ControlFlow::Wait;
-        
+
         if !running.load(std::sync::atomic::Ordering::SeqCst) {
             *control_flow = winit::event_loop::ControlFlow::Exit;
         }
