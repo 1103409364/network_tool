@@ -4,6 +4,7 @@ use if_addrs::get_if_addrs;
 use mac_address::mac_address_by_name;
 use serde::Serialize;
 use std::net::TcpListener;
+use log::{info, warn};
 
 // 网络接口信息的数据结构
 #[derive(Serialize)]
@@ -87,7 +88,7 @@ async fn start_web_server() -> std::io::Result<()> {
     let port = find_available_port(START, 9898).expect("No available ports found");
     // 判断 port 不等于 START，提示端口被占用
     if port != START {
-        println!("Port {} is not available, using port {}", START, port);
+        warn!("Port {} is not available, using port {}", START, port);
         // windows 系统弹出错误提示框 条件编译
         if cfg!(target_os = "windows") {
             use std::process::Command;
@@ -102,7 +103,7 @@ async fn start_web_server() -> std::io::Result<()> {
                 .expect("failed to execute process");
         }
     }
-    println!("Starting server at http://127.0.0.1:{}", port);
+    info!("Starting server at http://127.0.0.1:{}", port);
 
     HttpServer::new(|| {
         // 配置 CORS

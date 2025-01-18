@@ -7,16 +7,29 @@ use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
     Icon, TrayIconBuilder,
 };
+use std::fs::File;
+use log::{info, error};
+use simplelog::*;
 
 // 添加模块引用
 mod get_interfaces;
 use get_interfaces::launch_web_server;
 
 fn main() {
+    // 初始化日志系统
+    let log_file = File::create("security_assistant.log").unwrap();
+    CombinedLogger::init(vec![
+        WriteLogger::new(
+            LevelFilter::Info,
+            Config::default(),
+            log_file,
+        ),
+    ]).unwrap();
+
     // 确保程序单例运行
     let instance = single_instance::SingleInstance::new("2eHYAHYbarsMt3f").unwrap();
     if !instance.is_single() {
-        println!("程序已经在运行中");
+        error!("程序已经在运行中");
         return;
     }
 
@@ -51,6 +64,7 @@ fn main() {
     let event_loop = winit::event_loop::EventLoop::new();
 
     // 启动 web 服务器
+    info!("正在启动 web 服务器...");
     launch_web_server();
 
     // 处理菜单事件
