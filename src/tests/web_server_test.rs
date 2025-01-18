@@ -2,10 +2,10 @@
 use actix_web::{http::StatusCode, App};
 use std::net::TcpListener;
 
-use crate::server::{
-    main::find_available_port, model::net_status::{InterfaceError, InterfaceInfo},
+use crate::{common::utils::find_available_port, server::{
+    model::net_status::{InterfaceError, InterfaceInfo},
     service::net_status::get_interfaces,
-};
+}};
 
 #[test]
 fn test_find_available_port() {
@@ -34,7 +34,9 @@ fn test_interface_error() {
 #[actix_web::test]
 async fn test_get_interfaces() {
     // 测试获取接口信息
-    let app = actix_web::test::init_service(App::new().service(get_interfaces)).await;
+    let app = actix_web::test::init_service(App::new().service(
+        actix_web::web::resource("/interfaces").route(actix_web::web::get().to(get_interfaces))
+    )).await;
 
     let req = actix_web::test::TestRequest::get()
         .uri("/interfaces")
