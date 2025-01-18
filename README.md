@@ -37,7 +37,7 @@
 
 程序的主入口，负责初始化日志系统、确保单例运行、创建托盘图标和菜单、启动 Web 服务器，以及运行事件循环来处理用户交互。
 
-### 网络接口模块 (`get_interfaces.rs`)
+### 网络接口模块 (`web_server.rs`)
 
 负责获取网络接口信息、查找可用端口，以及启动 Web 服务器。
 
@@ -47,7 +47,7 @@
 - `start_web_server` 函数：创建 HTTP 服务器并处理 `/interfaces` 路由。
 - `launch_web_server` 函数：在后台线程中启动 Web 服务器。
 
-### 资源文件 (`src/assets/icon.png`)
+### 资源文件 (`src/assets/icon.rgba`)
 
 包含程序的图标文件。
 
@@ -72,7 +72,6 @@
 - `mac_address`: 用于获取 MAC 地址。
 - `serde`: 用于序列化数据。
 - `chrono`: 用于处理日期和时间。
-- `image`: 用于解码托盘图标图像。
 - `log`: 用于日志记录。
 - `simplelog`: 用于配置日志系统。
 - `single_instance`: 用于确保程序单例运行。
