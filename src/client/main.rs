@@ -1,4 +1,5 @@
 use std::sync::Arc;
+use log::info;
 use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
     Icon, TrayIconBuilder,
@@ -47,6 +48,7 @@ pub fn run() {
     std::thread::spawn(move || {
         while let Ok(event) = menu_channel.recv() {
             if event.id == quit_id {
+                info!("exiting");
                 // 如果点击了退出菜单项
                 running_clone.store(false, std::sync::atomic::Ordering::SeqCst);
                 break;
