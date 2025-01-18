@@ -56,7 +56,7 @@ fn main() {
     tray_menu.append(&quit_item).unwrap();
 
     // 创建托盘图标
-    let icon_data = include_bytes!("../assets/icon.png");
+    let icon_data = include_bytes!("./assets/icon.png");
     let image = ImageReader::new(std::io::Cursor::new(icon_data))
         .with_guessed_format()
         .unwrap()
