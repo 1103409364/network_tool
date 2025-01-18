@@ -9,6 +9,7 @@ fn main() {
     // 创建托盘菜单
     let tray_menu = Menu::new();
     let quit_item = MenuItem::new("退出", true, None);
+    let quit_id = quit_item.id().clone();
     tray_menu.append(&quit_item).unwrap();
 
     // 创建托盘图标
@@ -36,11 +37,10 @@ fn main() {
     let tray_icon = Arc::new(tray_icon);
 
     // 处理菜单事件
-    let tray_icon_clone = tray_icon.clone();
     let menu_channel = MenuEvent::receiver();
     std::thread::spawn(move || {
         while let Ok(event) = menu_channel.recv() {
-            if event.id == quit_item.id() {
+            if event.id == quit_id {
                 // 退出程序
                 std::process::exit(0);
             }
