@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use std::sync::Arc;
 use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
@@ -34,7 +36,7 @@ fn main() {
         .unwrap();
 
     // 保持托盘图标的所有权
-    let tray_icon = Arc::new(tray_icon);
+    let _tray_icon = Arc::new(tray_icon);
 
     // 处理菜单事件
     let menu_channel = MenuEvent::receiver();

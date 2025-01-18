@@ -1,5 +1,5 @@
 [package]
-name = "windows_tray_app"
+name = "get_interfaces"
 version = "0.1.0"
 edition = "2021"
 
@@ -17,5 +17,6 @@ features = [
 ]
 
 [[bin]]
-name = "windows_tray_app"
+name = "get_interfaces"
 path = "src/main.rs"
+subsystem = "windows"
