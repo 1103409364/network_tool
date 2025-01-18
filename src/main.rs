@@ -1,30 +1,45 @@
 #![windows_subsystem = "windows"]
 
+use chrono::Local;
 use image::io::Reader as ImageReader;
+use log::{error, info};
+use simplelog::*;
 use single_instance;
+use std::fs::{self, File};
+use std::path::Path;
 use std::sync::Arc;
 use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
     Icon, TrayIconBuilder,
 };
-use std::fs::File;
-use log::{info, error};
-use simplelog::*;
 
 // 添加模块引用
 mod get_interfaces;
 use get_interfaces::launch_web_server;
 
 fn main() {
+    // 创建 log 目录
+    let log_dir = Path::new("log");
+    if !log_dir.exists() {
+        fs::create_dir(log_dir).unwrap();
+    }
+
+    // 使用当前日期作为日志文件名
+    let current_date = Local::now().format("%Y-%m-%d").to_string();
+    let log_file_path = log_dir.join(format!("network_tool_{}.log", current_date));
+
     // 初始化日志系统
-    let log_file = File::create("security_assistant.log").unwrap();
-    CombinedLogger::init(vec![
-        WriteLogger::new(
-            LevelFilter::Info,
-            Config::default(),
-            log_file,
-        ),
-    ]).unwrap();
+    let log_file = File::create(log_file_path).unwrap();
+    CombinedLogger::init(vec![WriteLogger::new(
+        LevelFilter::Info,
+        ConfigBuilder::new()
+            .set_time_format_rfc3339()  // 使用 RFC3339 格式的时间戳
+            .set_target_level(LevelFilter::Error)
+            .set_location_level(LevelFilter::Error)
+            .build(),
+        log_file,
+    )])
+    .unwrap();
 
     // 确保程序单例运行
     let instance = single_instance::SingleInstance::new("2eHYAHYbarsMt3f").unwrap();

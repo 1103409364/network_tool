@@ -21,6 +21,7 @@ actix-cors = "0.6"
 # 日志依赖
 log = "0.4"
 simplelog = "0.12"
+chrono = "0.4"
 
 [dependencies.windows]
 version = "0.48"
