@@ -83,7 +83,7 @@ pub fn find_available_port(start: u16, end: u16) -> Option<u16> {
 // 程序入口点
 #[actix_web::main]
 async fn start_web_server() -> std::io::Result<()> {
-    const START: u16 = 9123;
+    const START: u16 = 9425;
     let port = find_available_port(START, 9898).expect("No available ports found");
     // 判断 port 不等于 START，提示端口被占用
     if port != START {
