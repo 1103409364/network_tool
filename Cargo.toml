@@ -29,3 +29,9 @@ features = [
 name = "network_tool"
 path = "src/main.rs"
 subsystem = "windows"
+
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+strip = true
