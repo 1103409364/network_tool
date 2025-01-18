@@ -6,8 +6,16 @@ use tray_icon::{
     Icon, TrayIconBuilder,
 };
 use image::io::Reader as ImageReader;
+use single_instance;
 
 fn main() {
+    // 确保程序单例运行
+    let instance = single_instance::SingleInstance::new("my_unique_app_name").unwrap();
+    if !instance.is_single() {
+        println!("程序已经在运行中");
+        return;
+    }
+
     // 创建托盘菜单
     let tray_menu = Menu::new();
     let quit_item = MenuItem::new("退出", true, None);

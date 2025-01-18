@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+single-instance = "0.3"
 tray-icon = "0.11"
 window-vibrancy = "0.4"
 window-shadows = "0.2"
