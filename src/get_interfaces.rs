@@ -3,6 +3,7 @@ use mac_address::mac_address_by_name;
 use serde::Serialize;
 use if_addrs::get_if_addrs;
 use std::net::TcpListener;
+use actix_cors::Cors;
 
 // 网络接口信息的数据结构
 #[derive(Serialize)]
@@ -86,7 +87,15 @@ async fn start_web_server() -> std::io::Result<()> {
     println!("Starting server at http://127.0.0.1:{}", port);
 
     HttpServer::new(|| {
+        // 配置 CORS
+        let cors = Cors::default()
+            .allow_any_origin()     // 允许所有来源
+            .allow_any_method()     // 允许所有 HTTP 方法
+            .allow_any_header()     // 允许所有请求头
+            .max_age(3600);         // 预检请求的缓存时间（秒）
+
         App::new()
+            .wrap(cors)             // 添加 CORS 中间件
             .service(get_interfaces)
     })
     .bind(("127.0.0.1", port))?
