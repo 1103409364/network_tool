@@ -14,7 +14,7 @@ use get_interfaces::launch_web_server;
 
 fn main() {
     // 确保程序单例运行
-    let instance = single_instance::SingleInstance::new("my_unique_app_name").unwrap();
+    let instance = single_instance::SingleInstance::new("2eHYAHYbarsMt3f").unwrap();
     if !instance.is_single() {
         println!("程序已经在运行中");
         return;
