@@ -1,10 +1,26 @@
 use actix_cors::Cors;
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use actix_web::{get, App, HttpResponse, HttpServer};
 use if_addrs::get_if_addrs;
+use log::{error, info, warn};
 use mac_address::mac_address_by_name;
 use serde::Serialize;
 use std::net::TcpListener;
-use log::{info, warn};
+use thiserror::Error;
+
+// 定义错误类型
+#[derive(Error, Debug)]
+enum InterfaceError {
+    #[error("Failed to get network interfaces: {0}")]
+    GetIfAddrsError(#[from] std::io::Error),
+    #[error("Failed to get MAC address: {0}")]
+    MacAddressError(#[from] mac_address::MacAddressError),
+    #[error("No active network interfaces found")]
+    NoActiveInterfaces,
+    #[error("Failed to find available port")]
+    NoAvailablePort,
+}
+
+impl actix_web::ResponseError for InterfaceError {}
 
 // 网络接口信息的数据结构
 #[derive(Serialize)]
@@ -22,70 +38,68 @@ struct InterfaceInfo {
 // 处理 GET /interfaces 请求
 // 返回所有活跃的网络接口信息
 #[get("/interfaces")]
-async fn get_interfaces() -> impl Responder {
+async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
     // 获取系统中的所有网络接口
-    match get_if_addrs() {
-        Ok(interfaces) => {
-            // 将接口列表转换为 InterfaceInfo 结构的 Vec
-            let interface_infos: Vec<InterfaceInfo> = interfaces
-                .into_iter()
-                // 过滤掉不活跃和本地回环接口
-                .filter(|interface| {
-                    let ip = interface.addr.ip().to_string();
-                    !interface.is_loopback()  // 过滤掉回环接口
-                        && ip != "0.0.0.0"    // 过滤掉未配置 IP 的接口
-                        && ip != "127.0.0.1"  // 过滤掉 IPv4 回环地址
-                        // && ip != "::1"        // 过滤掉 IPv6 回环地址
-                        // 过滤掉 IPv6 地址，判断包含冒号的情况
-                        && !ip.contains(':')
-                })
-                // 过滤并映射：只保留能获取到 MAC 地址的接口
-                .filter_map(|interface| {
-                    // 尝试获取接口的 MAC 地址
-                    let mac = mac_address_by_name(&interface.name)
-                        .ok() // 将 Result 转换为 Option
-                        .flatten() // 展平嵌套的 Option
-                        .map(|mac| mac.to_string());
+    let interfaces = get_if_addrs().map_err(InterfaceError::GetIfAddrsError)?;
 
-                    // 只返回有 MAC 地址的接口信息
-                    mac.map(|mac_addr| InterfaceInfo {
-                        mac_address: Some(mac_addr),
-                        interface_name: interface.name,
-                        ip_address: interface.addr.ip().to_string(),
-                        is_active: true,
-                    })
-                })
-                .collect();
+    // 将接口列表转换为 InterfaceInfo 结构的 Vec
+    let interface_infos: Vec<InterfaceInfo> = interfaces
+        .into_iter()
+        // 过滤掉不活跃和本地回环接口
+        .filter(|interface| {
+            let ip = interface.addr.ip().to_string();
+            !interface.is_loopback()  // 过滤掉回环接口
+                && ip != "0.0.0.0"    // 过滤掉未配置 IP 的接口
+                && ip != "127.0.0.1"  // 过滤掉 IPv4 回环地址
+                // && ip != "::1"        // 过滤掉 IPv6 回环地址
+                // 过滤掉 IPv6 地址，判断包含冒号的情况
+                && !ip.contains(':')
+        })
+        // 过滤并映射：只保留能获取到 MAC 地址的接口
+        .filter_map(|interface| {
+            // 尝试获取接口的 MAC 地址
+            let mac = match mac_address_by_name(&interface.name) {
+                Ok(Some(mac)) => Some(mac.to_string()),
+                Ok(None) => None,
+                Err(_) => None,
+            };
 
-            // 检查是否找到了活跃的接口
-            if interface_infos.is_empty() {
-                HttpResponse::NotFound().body("No active network interfaces found")
-            } else {
-                HttpResponse::Ok().json(interface_infos)
-            }
-        }
-        Err(e) => HttpResponse::InternalServerError().body(format!("Error: {}", e)),
+            // 只返回有 MAC 地址的接口信息
+            mac.map(|mac_addr| InterfaceInfo {
+                mac_address: Some(mac_addr),
+                interface_name: interface.name,
+                ip_address: interface.addr.ip().to_string(),
+                is_active: true,
+            })
+        })
+        .collect();
+
+    // 检查是否找到了活跃的接口
+    if interface_infos.is_empty() {
+        Err(InterfaceError::NoActiveInterfaces)
+    } else {
+        Ok(HttpResponse::Ok().json(interface_infos))
     }
 }
 
 /// 查找可用的端口
-/// 返回一个可用的端口号，如果没有可用的端口则返回 None
-pub fn find_available_port(start: u16, end: u16) -> Option<u16> {
+/// 返回一个可用的端口号，如果没有可用的端口则返回错误
+fn find_available_port(start: u16, end: u16) -> Result<u16, InterfaceError> {
     for port in start..end {
         // TcpListener::bind 创建的 TcpListener 对象在离开作用域时会自动被 drop，从而释放占用的端口。因此，我们不需要显式地调用 drop。
         match TcpListener::bind(("127.0.0.1", port)) {
-            Ok(_) => return Some(port),
+            Ok(_) => return Ok(port),
             Err(_) => continue,
         }
     }
-    None
+    Err(InterfaceError::NoAvailablePort)
 }
 
 // 程序入口点
 #[actix_web::main]
-async fn start_web_server() -> std::io::Result<()> {
+async fn start_web_server() -> Result<(), InterfaceError> {
     const START: u16 = 9425;
-    let port = find_available_port(START, 9898).expect("No available ports found");
+    let port = find_available_port(START, 9898)?;
     // 判断 port 不等于 START，提示端口被占用
     if port != START {
         warn!("Port {} is not available, using port {}", START, port);
@@ -117,14 +131,18 @@ async fn start_web_server() -> std::io::Result<()> {
             .wrap(cors) // 添加 CORS 中间件
             .service(get_interfaces)
     })
-    .bind(("127.0.0.1", port))?
+    .bind(("127.0.0.1", port))
+    .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))?
     .run()
     .await
+    .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))
 }
 
 // 导出这个函数供 main.rs 使用
 pub fn launch_web_server() {
     std::thread::spawn(|| {
-        start_web_server().unwrap();
+        if let Err(e) = start_web_server() {
+            error!("Failed to start web server: {}", e);
+        }
     });
 }

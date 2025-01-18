@@ -1872,6 +1872,7 @@ dependencies = [
  "serde_json",
  "simplelog",
  "single-instance",
+ "thiserror",
  "tray-icon",
  "window-shadows",
  "window-vibrancy",

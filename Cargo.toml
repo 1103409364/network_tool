@@ -22,6 +22,8 @@ actix-cors = "0.6"
 log = "0.4"
 simplelog = "0.12"
 chrono = "0.4"
+# 错误处理依赖
+thiserror = "1.0"
 
 [dependencies.windows]
 version = "0.48"
