@@ -1,7 +1,6 @@
 #![windows_subsystem = "windows"]
 
 use chrono::Local;
-use image::io::Reader as ImageReader;
 use log::{error, info};
 use simplelog::*;
 use single_instance::SingleInstance;
@@ -56,15 +55,12 @@ fn main() {
     let quit_id = quit_item.id().clone();
     tray_menu.append(&quit_item).unwrap();
 
-    // 创建托盘图标
-    let icon_data = include_bytes!("./assets/icon.png");
-    let image = ImageReader::new(std::io::Cursor::new(icon_data))
-        .with_guessed_format()
-        .unwrap()
-        .decode()
-        .unwrap();
-    let rgba = image.into_rgba8();
-    let icon = Icon::from_rgba(rgba.as_raw().to_vec(), rgba.width(), rgba.height()).unwrap();
+    // 创建托盘图标，使用 rgba 格式，减少对 image 库的依赖。png 转 rgba 格式工具 https://convertio.co/zh/png-rgba/
+    let icon = Icon::from_rgba(
+        include_bytes!("./assets/icon.rgba").to_vec(),
+        200,  // 宽度，根据你的实际图片尺寸调整 尺寸和图片不一致时，运行报错
+        200   // 高度，根据你的实际图片尺寸调整
+    ).expect("无法加载托盘图标");
 
     let tray_icon = TrayIconBuilder::new()
         .with_icon(icon)
