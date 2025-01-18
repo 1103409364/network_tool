@@ -48,7 +48,7 @@ pub fn run() {
     std::thread::spawn(move || {
         while let Ok(event) = menu_channel.recv() {
             if event.id == quit_id {
-                info!("exiting");
+                info!("exit");
                 // 如果点击了退出菜单项
                 running_clone.store(false, std::sync::atomic::Ordering::SeqCst);
                 break;

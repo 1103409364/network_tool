@@ -31,9 +31,10 @@ async fn start_web_server() -> Result<(), InterfaceError> {
                 .expect("failed to execute process");
         }
     }
+    
     info!("Starting at http://127.0.0.1:{}", port);
 
-    HttpServer::new(|| {
+    let server = HttpServer::new(|| {
         // 配置 CORS
         let cors = Cors::default()
             .allow_any_origin() // 允许所有来源
@@ -46,10 +47,15 @@ async fn start_web_server() -> Result<(), InterfaceError> {
             .service(get_interfaces)
     })
     .bind(("127.0.0.1", port))
-    .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))?
-    .run()
-    .await
-    .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))
+    .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))?;
+
+    info!("Web server is ready to accept connections");
+    
+    let result = server.run().await;
+    
+    info!("Web server has stopped");
+    
+    result.map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))
 }
 
 /// 启动 Web 服务器的公共函数
