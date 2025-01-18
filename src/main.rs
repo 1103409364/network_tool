@@ -57,7 +57,7 @@ fn main() {
 
     // 创建托盘图标，使用 rgba 格式，减少对 image 库的依赖。png 转 rgba 格式工具 https://convertio.co/zh/png-rgba/
     let icon = Icon::from_rgba(
-        include_bytes!("./assets/icon.rgba").to_vec(),
+        include_bytes!(concat!(env!("CARGO_MANIFEST_DIR"), "/src/assets/icon.rgba")).to_vec(),
         200,  // 宽度，根据你的实际图片尺寸调整 尺寸和图片不一致时，运行报错
         200   // 高度，根据你的实际图片尺寸调整
     ).expect("无法加载托盘图标");
