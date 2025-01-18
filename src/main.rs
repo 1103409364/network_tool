@@ -1,9 +1,9 @@
 use std::sync::Arc;
 use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
-    TrayIcon, TrayIconBuilder,
+    Icon, TrayIconBuilder,
 };
-use image::load_from_memory;
+use image::io::Reader as ImageReader;
 
 fn main() {
     // 创建托盘菜单
@@ -12,7 +12,19 @@ fn main() {
     tray_menu.append(&quit_item).unwrap();
 
     // 创建托盘图标
-    let icon = load_from_memory(include_bytes!("../assets/icon.png")).unwrap();
+    let icon_data = include_bytes!("../assets/icon.png");
+    let image = ImageReader::new(std::io::Cursor::new(icon_data))
+        .with_guessed_format()
+        .unwrap()
+        .decode()
+        .unwrap();
+    let rgba = image.into_rgba8();
+    let icon = Icon::from_rgba(
+        rgba.as_raw().to_vec(),
+        rgba.width(),
+        rgba.height()
+    ).unwrap();
+
     let tray_icon = TrayIconBuilder::new()
         .with_icon(icon)
         .with_menu(Box::new(tray_menu))
