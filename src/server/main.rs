@@ -56,7 +56,7 @@ async fn start_web_server() -> Result<(), InterfaceError> {
 /// 在新线程中启动服务器，避免阻塞主线程
 ///
 /// 如果服务器启动失败，会记录错误信息但不会导致程序崩溃
-pub fn launch_web_server() {
+pub fn run() {
     std::thread::spawn(|| {
         if let Err(e) = start_web_server() {
             error!("Failed to start web server: {}", e);
