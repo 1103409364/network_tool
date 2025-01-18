@@ -7,36 +7,48 @@ use serde::Serialize;
 use std::net::TcpListener;
 use thiserror::Error;
 
-// 定义错误类型
+/// 定义应用程序可能遇到的错误类型
 #[derive(Error, Debug)]
 enum InterfaceError {
+    /// 获取网络接口信息失败
     #[error("Failed to get network interfaces: {0}")]
     GetIfAddrsError(#[from] std::io::Error),
+    
+    /// 获取 MAC 地址失败
     #[error("Failed to get MAC address: {0}")]
     MacAddressError(#[from] mac_address::MacAddressError),
+    
+    /// 未找到活跃的网络接口
     #[error("No active network interfaces found")]
     NoActiveInterfaces,
+    
+    /// 未找到可用的端口
     #[error("Failed to find available port")]
     NoAvailablePort,
 }
 
 impl actix_web::ResponseError for InterfaceError {}
 
-// 网络接口信息的数据结构
+/// 网络接口信息的数据结构
+/// 用于序列化和返回给客户端的接口信息
 #[derive(Serialize)]
 struct InterfaceInfo {
-    // MAC 地址，可能为 None（如果无法获取）
+    /// MAC 地址，可能为 None（如果无法获取）
     mac_address: Option<String>,
-    // 网络接口名称（如 "eth0", "en0" 等）
+    /// 网络接口名称（如 "eth0", "en0" 等）
     interface_name: String,
-    // IP 地址
+    /// IP 地址
     ip_address: String,
-    // 接口是否活跃
+    /// 接口是否活跃
     is_active: bool,
 }
 
-// 处理 GET /interfaces 请求
-// 返回所有活跃的网络接口信息
+/// 处理 GET /interfaces 请求
+/// 返回所有活跃的网络接口信息
+/// 
+/// # 返回值
+/// - 成功：返回包含接口信息的 JSON 数组
+/// - 失败：返回相应的错误信息
 #[get("/interfaces")]
 async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
     // 获取系统中的所有网络接口
@@ -83,7 +95,15 @@ async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
 }
 
 /// 查找可用的端口
-/// 返回一个可用的端口号，如果没有可用的端口则返回错误
+/// 在指定的端口范围内查找第一个可用的端口
+/// 
+/// # 参数
+/// - start: 起始端口号
+/// - end: 结束端口号
+/// 
+/// # 返回值
+/// - Ok(port): 找到的可用端口
+/// - Err(InterfaceError): 未找到可用端口
 fn find_available_port(start: u16, end: u16) -> Result<u16, InterfaceError> {
     for port in start..end {
         // TcpListener::bind 创建的 TcpListener 对象在离开作用域时会自动被 drop，从而释放占用的端口。因此，我们不需要显式地调用 drop。
@@ -95,7 +115,12 @@ fn find_available_port(start: u16, end: u16) -> Result<u16, InterfaceError> {
     Err(InterfaceError::NoAvailablePort)
 }
 
-// 程序入口点
+/// Web 服务器的主入口函数
+/// 负责启动 HTTP 服务器并配置所有路由
+/// 
+/// # 错误处理
+/// - 如果指定端口被占用，会尝试使用其他端口
+/// - 在 Windows 系统上，如果端口被占用会显示提示框
 #[actix_web::main]
 async fn start_web_server() -> Result<(), InterfaceError> {
     const START: u16 = 9425;
@@ -138,7 +163,10 @@ async fn start_web_server() -> Result<(), InterfaceError> {
     .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))
 }
 
-// 导出这个函数供 main.rs 使用
+/// 启动 Web 服务器的公共函数
+/// 在新线程中启动服务器，避免阻塞主线程
+/// 
+/// 如果服务器启动失败，会记录错误信息但不会导致程序崩溃
 pub fn launch_web_server() {
     std::thread::spawn(|| {
         if let Err(e) = start_web_server() {
