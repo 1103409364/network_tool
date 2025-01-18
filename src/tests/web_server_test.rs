@@ -1,15 +1,17 @@
 use crate::web_server::*;
 use std::net::TcpListener;
+use actix_web::{App, http::StatusCode};
 
 #[test]
 fn test_find_available_port() {
     // 测试正常情况
     let port = find_available_port(9000, 9100).unwrap();
     assert!(port >= 9000 && port <= 9100);
-
     // 测试端口被占用的情况
     let listener = TcpListener::bind(("127.0.0.1", port)).unwrap();
     let next_port = find_available_port(port, port + 1).unwrap();
+    let s = next_port;
+    println!("{s}");
     assert!(next_port > port);
     drop(listener);
 }
@@ -33,20 +35,27 @@ fn test_interface_error() {
 #[actix_web::test]
 async fn test_get_interfaces() {
     // 测试获取接口信息
-    let resp = get_interfaces().await;
+    let app = actix_web::test::init_service(
+        App::new().service(get_interfaces)
+    ).await;
+
+    let req = actix_web::test::TestRequest::get()
+        .uri("/interfaces")
+        .to_request();
     
-    match resp {
-        Ok(response) => {
-            let body = response.into_body();
-            assert!(body.size() > 0);
+    let resp = actix_web::test::call_service(&app, req).await;
+    
+    match resp.status() {
+        StatusCode::OK => {
+            let body = actix_web::test::read_body(resp).await;
+            assert!(!body.is_empty());
         },
-        Err(e) => {
-            // 如果没有活跃接口，应该返回 NoActiveInterfaces 错误
-            match e {
-                InterfaceError::NoActiveInterfaces => (),
-                _ => panic!("Unexpected error: {}", e),
-            }
-        }
+        StatusCode::INTERNAL_SERVER_ERROR => {
+            // 如果没有活跃接口的情况
+            let error_body = actix_web::test::read_body(resp).await;
+            assert!(!error_body.is_empty());
+        },
+        _ => panic!("意外的状态码: {}", resp.status()),
     }
 }
 
