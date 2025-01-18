@@ -38,6 +38,9 @@ fn main() {
     // 保持托盘图标的所有权
     let _tray_icon = Arc::new(tray_icon);
 
+    // 创建事件循环
+    let event_loop = winit::event_loop::EventLoop::new();
+    
     // 处理菜单事件
     let menu_channel = MenuEvent::receiver();
     let running = Arc::new(std::sync::atomic::AtomicBool::new(true));
@@ -52,8 +55,12 @@ fn main() {
         }
     });
 
-    // 保持程序运行
-    while running.load(std::sync::atomic::Ordering::SeqCst) {
-        std::thread::sleep(std::time::Duration::from_secs(1));
-    }
+    // 运行事件循环
+    event_loop.run(move |_event, _, control_flow| {
+        *control_flow = winit::event_loop::ControlFlow::Wait;
+        
+        if !running.load(std::sync::atomic::Ordering::SeqCst) {
+            *control_flow = winit::event_loop::ControlFlow::Exit;
+        }
+    });
 }
