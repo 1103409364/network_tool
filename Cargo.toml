@@ -18,6 +18,9 @@ serde_json = "1.0"
 if-addrs = "0.10.1"
 open = "3.2"
 actix-cors = "0.6"
+# 日志依赖
+log = "0.4"
+simplelog = "0.12"
 
 [dependencies.windows]
 version = "0.48"

@@ -64,7 +64,7 @@ fn main() {
     let event_loop = winit::event_loop::EventLoop::new();
 
     // 启动 web 服务器
-    info!("正在启动 web 服务器...");
+    info!("Starting...");
     launch_web_server();
 
     // 处理菜单事件

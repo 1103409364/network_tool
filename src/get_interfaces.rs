@@ -103,7 +103,7 @@ async fn start_web_server() -> std::io::Result<()> {
                 .expect("failed to execute process");
         }
     }
-    info!("Starting server at http://127.0.0.1:{}", port);
+    info!("Starting at http://127.0.0.1:{}", port);
 
     HttpServer::new(|| {
         // 配置 CORS
