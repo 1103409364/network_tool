@@ -9,7 +9,7 @@ use thiserror::Error;
 
 /// 定义应用程序可能遇到的错误类型
 #[derive(Error, Debug)]
-enum InterfaceError {
+pub enum InterfaceError {
     /// 获取网络接口信息失败
     #[error("Failed to get network interfaces: {0}")]
     GetIfAddrsError(#[from] std::io::Error),
@@ -32,15 +32,15 @@ impl actix_web::ResponseError for InterfaceError {}
 /// 网络接口信息的数据结构
 /// 用于序列化和返回给客户端的接口信息
 #[derive(Serialize)]
-struct InterfaceInfo {
+pub struct InterfaceInfo {
     /// MAC 地址，可能为 None（如果无法获取）
-    mac_address: Option<String>,
+    pub mac_address: Option<String>,
     /// 网络接口名称（如 "eth0", "en0" 等）
-    interface_name: String,
+    pub interface_name: String,
     /// IP 地址
-    ip_address: String,
+    pub ip_address: String,
     /// 接口是否活跃
-    is_active: bool,
+    pub is_active: bool,
 }
 
 /// 处理 GET /interfaces 请求
@@ -104,7 +104,7 @@ async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
 /// # 返回值
 /// - Ok(port): 找到的可用端口
 /// - Err(InterfaceError): 未找到可用端口
-fn find_available_port(start: u16, end: u16) -> Result<u16, InterfaceError> {
+pub(crate) fn find_available_port(start: u16, end: u16) -> Result<u16, InterfaceError> { // pub(crate) 表示该项（函数、结构体等）只在当前 crate （包）内可见
     for port in start..end {
         // TcpListener::bind 创建的 TcpListener 对象在离开作用域时会自动被 drop，从而释放占用的端口。因此，我们不需要显式地调用 drop。
         match TcpListener::bind(("127.0.0.1", port)) {

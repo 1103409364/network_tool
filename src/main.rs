@@ -18,6 +18,10 @@ use winit::event_loop::EventLoop;
 mod web_server; // mod 是 Rust 中的模块导入关键字，文件即模块，不需要额外声明
 use web_server::launch_web_server;
 
+
+#[cfg(test)] // 条件编译，只有在测试模式下才编译测试代码，只有当你运行 cargo test 命令时，这个模块才会被编译和执行
+mod tests; // 导入测试模块
+
 /// 程序入口函数
 fn main() {
     // 初始化日志系统
