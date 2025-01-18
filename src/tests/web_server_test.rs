@@ -1,6 +1,11 @@
-use crate::web_server::*;
+// use crate::web_server::*;
+use actix_web::{http::StatusCode, App};
 use std::net::TcpListener;
-use actix_web::{App, http::StatusCode};
+
+use crate::server::{
+    main::find_available_port, model::net_status::{InterfaceError, InterfaceInfo},
+    service::net_status::get_interfaces,
+};
 
 #[test]
 fn test_find_available_port() {
@@ -20,41 +25,33 @@ fn test_find_available_port() {
 fn test_interface_error() {
     // 测试错误类型的转换和显示
     let err = InterfaceError::NoActiveInterfaces;
-    assert_eq!(
-        err.to_string(),
-        "No active network interfaces found"
-    );
+    assert_eq!(err.to_string(), "No active network interfaces found");
 
     let err = InterfaceError::NoAvailablePort;
-    assert_eq!(
-        err.to_string(),
-        "Failed to find available port"
-    );
+    assert_eq!(err.to_string(), "Failed to find available port");
 }
 
 #[actix_web::test]
 async fn test_get_interfaces() {
     // 测试获取接口信息
-    let app = actix_web::test::init_service(
-        App::new().service(get_interfaces)
-    ).await;
+    let app = actix_web::test::init_service(App::new().service(get_interfaces)).await;
 
     let req = actix_web::test::TestRequest::get()
         .uri("/interfaces")
         .to_request();
-    
+
     let resp = actix_web::test::call_service(&app, req).await;
-    
+
     match resp.status() {
         StatusCode::OK => {
             let body = actix_web::test::read_body(resp).await;
             assert!(!body.is_empty());
-        },
+        }
         StatusCode::INTERNAL_SERVER_ERROR => {
             // 如果没有活跃接口的情况
             let error_body = actix_web::test::read_body(resp).await;
             assert!(!error_body.is_empty());
-        },
+        }
         _ => panic!("意外的状态码: {}", resp.status()),
     }
 }
@@ -74,4 +71,4 @@ fn test_interface_info_serialization() {
     assert!(serialized.contains("test0"));
     assert!(serialized.contains("192.168.1.1"));
     assert!(serialized.contains("true"));
-} 
+}
