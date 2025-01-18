@@ -1,9 +1,9 @@
+use actix_cors::Cors;
 use actix_web::{get, App, HttpResponse, HttpServer, Responder};
+use if_addrs::get_if_addrs;
 use mac_address::mac_address_by_name;
 use serde::Serialize;
-use if_addrs::get_if_addrs;
 use std::net::TcpListener;
-use actix_cors::Cors;
 
 // 网络接口信息的数据结构
 #[derive(Serialize)]
@@ -42,8 +42,8 @@ async fn get_interfaces() -> impl Responder {
                 .filter_map(|interface| {
                     // 尝试获取接口的 MAC 地址
                     let mac = mac_address_by_name(&interface.name)
-                        .ok()           // 将 Result 转换为 Option
-                        .flatten()      // 展平嵌套的 Option
+                        .ok() // 将 Result 转换为 Option
+                        .flatten() // 展平嵌套的 Option
                         .map(|mac| mac.to_string());
 
                     // 只返回有 MAC 地址的接口信息
@@ -69,8 +69,8 @@ async fn get_interfaces() -> impl Responder {
 
 /// 查找可用的端口
 /// 返回一个可用的端口号，如果没有可用的端口则返回 None
-pub fn find_available_port() -> Option<u16> {
-    for port in 8080..9000 {
+pub fn find_available_port(start: u16, end: u16) -> Option<u16> {
+    for port in start..end {
         // TcpListener::bind 创建的 TcpListener 对象在离开作用域时会自动被 drop，从而释放占用的端口。因此，我们不需要显式地调用 drop。
         match TcpListener::bind(("127.0.0.1", port)) {
             Ok(_) => return Some(port),
@@ -83,19 +83,37 @@ pub fn find_available_port() -> Option<u16> {
 // 程序入口点
 #[actix_web::main]
 async fn start_web_server() -> std::io::Result<()> {
-    let port = find_available_port().expect("No available ports found");
+    const START: u16 = 9123;
+    let port = find_available_port(START, 9898).expect("No available ports found");
+    // 判断 port 不等于 START，提示端口被占用
+    if port != START {
+        println!("Port {} is not available, using port {}", START, port);
+        // windows 系统弹出错误提示框 条件编译
+        if cfg!(target_os = "windows") {
+            use std::process::Command;
+            Command::new("cmd")
+                .args(&[
+                    "/C",
+                    "start",
+                    "mshta",
+                    "javascript:alert('端口被占用，请重启后重试');close();",
+                ])
+                .output()
+                .expect("failed to execute process");
+        }
+    }
     println!("Starting server at http://127.0.0.1:{}", port);
 
     HttpServer::new(|| {
         // 配置 CORS
         let cors = Cors::default()
-            .allow_any_origin()     // 允许所有来源
-            .allow_any_method()     // 允许所有 HTTP 方法
-            .allow_any_header()     // 允许所有请求头
-            .max_age(3600);         // 预检请求的缓存时间（秒）
+            .allow_any_origin() // 允许所有来源
+            .allow_any_method() // 允许所有 HTTP 方法
+            .allow_any_header() // 允许所有请求头
+            .max_age(3600); // 预检请求的缓存时间（秒）
 
         App::new()
-            .wrap(cors)             // 添加 CORS 中间件
+            .wrap(cors) // 添加 CORS 中间件
             .service(get_interfaces)
     })
     .bind(("127.0.0.1", port))?
