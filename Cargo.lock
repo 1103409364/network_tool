@@ -1039,25 +1039,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "get_interfaces"
-version = "0.1.0"
-dependencies = [
- "actix-web",
- "if-addrs",
- "image",
- "mac_address",
- "open",
- "serde",
- "serde_json",
- "single-instance",
- "tray-icon",
- "window-shadows",
- "window-vibrancy",
- "windows",
- "winit",
-]
-
-[[package]]
 name = "getrandom"
 version = "0.2.15"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1806,6 +1787,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "3cf2aae958bd232cac5069850591667ad422d263686d75b52a065f9badeee5a3"
 dependencies = [
  "jni-sys",
+]
+
+[[package]]
+name = "network_tool"
+version = "0.1.0"
+dependencies = [
+ "actix-web",
+ "if-addrs",
+ "image",
+ "mac_address",
+ "open",
+ "serde",
+ "serde_json",
+ "single-instance",
+ "tray-icon",
+ "window-shadows",
+ "window-vibrancy",
+ "windows",
+ "winit",
 ]
 
 [[package]]

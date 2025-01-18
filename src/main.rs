@@ -40,7 +40,7 @@ fn main() {
     let tray_icon = TrayIconBuilder::new()
         .with_icon(icon)
         .with_menu(Box::new(tray_menu))
-        .with_tooltip("安全中心")
+        .with_tooltip("安全助手")
         .build()
         .unwrap();
 
