@@ -29,7 +29,7 @@ fn main() {
     let tray_icon = TrayIconBuilder::new()
         .with_icon(icon)
         .with_menu(Box::new(tray_menu))
-        .with_tooltip("Windows 托盘程序")
+        .with_tooltip("安全中心")
         .build()
         .unwrap();
 
@@ -38,17 +38,20 @@ fn main() {
 
     // 处理菜单事件
     let menu_channel = MenuEvent::receiver();
+    let running = Arc::new(std::sync::atomic::AtomicBool::new(true));
+    let running_clone = running.clone();
+
     std::thread::spawn(move || {
         while let Ok(event) = menu_channel.recv() {
             if event.id == quit_id {
-                // 退出程序
-                std::process::exit(0);
+                running_clone.store(false, std::sync::atomic::Ordering::SeqCst);
+                break;
             }
         }
     });
 
     // 保持程序运行
-    loop {
+    while running.load(std::sync::atomic::Ordering::SeqCst) {
         std::thread::sleep(std::time::Duration::from_secs(1));
     }
 }
