@@ -14,6 +14,7 @@ fn main() {
         error!("程序已经在运行中");
         return;
     }
+    common::log::config();
     info!("starting...");
     // 启动 Web 服务器
     server::main::run(); // use server::main::run;
