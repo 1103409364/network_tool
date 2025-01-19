@@ -25,7 +25,10 @@ simplelog = "0.12"
 chrono = "0.4"
 # 错误处理依赖
 thiserror = "1.0"
-# tokio 依赖移至 [dependencies]
+# swagger 依赖
+utoipa = "5.3.1"
+utoipa-swagger-ui = { version = "9.0.0", features = ["actix-web"] }
+
 
 [dependencies.windows]
 version = "0.48"
@@ -43,5 +46,5 @@ codegen-units = 1
 strip = true
 
 [dev-dependencies]
-tokio = { version = "1.0", features = ["full"] }
+# tokio = { version = "1.0", features = ["full"] } # 移入 dependencies
 actix-rt = "2.8"

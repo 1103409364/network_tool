@@ -1,6 +1,7 @@
 use log::error;
 use serde::Serialize;
 use thiserror::Error;
+use utoipa::ToSchema;
 
 /// 定义应用程序可能遇到的错误类型
 #[derive(Error, Debug)]
@@ -26,7 +27,7 @@ impl actix_web::ResponseError for InterfaceError {}
 
 /// 网络接口信息的数据结构
 /// 用于序列化和返回给客户端的接口信息
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct InterfaceInfo {
     /// MAC 地址，可能为 None（如果无法获取）
     pub mac_address: Option<String>,
@@ -39,7 +40,7 @@ pub struct InterfaceInfo {
 }
 
 /// 本机网络连接状态
-#[derive(Serialize)]
+#[derive(Serialize, ToSchema)]
 pub struct NetworkStatus {
     /// 是否已连接到互联网
     pub is_connected: bool,

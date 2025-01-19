@@ -6,6 +6,21 @@ use crate::server::{
 use actix_cors::Cors;
 use actix_web::{App, HttpServer};
 use log::{error, info, warn};
+use utoipa::OpenApi;
+use utoipa_swagger_ui::SwaggerUi;
+
+#[derive(OpenApi)]
+#[openapi(
+    paths(
+        crate::server::controller::net_status::get_interfaces,
+        crate::server::controller::net_status::get_network_status
+    ),
+    components(schemas(
+        crate::server::model::net_status::NetworkStatus,
+        crate::server::model::net_status::InterfaceInfo
+    ))
+)]
+struct ApiDoc;
 
 /// Web 服务器的主入口函数
 /// 负责启动 HTTP 服务器并配置所有路由
@@ -37,7 +52,7 @@ async fn start_web_server() -> Result<(), InterfaceError> {
 
     info!("Server starting at http://127.0.0.1:{}", port);
 
-    let server = HttpServer::new(|| {
+    let server = HttpServer::new(move || {
         // 配置 CORS
         let cors = Cors::default()
             .allow_any_origin() // 允许所有来源
@@ -45,10 +60,15 @@ async fn start_web_server() -> Result<(), InterfaceError> {
             .allow_any_header() // 允许所有请求头
             .max_age(3600); // 预检请求的缓存时间（秒）
 
+        let openapi = ApiDoc::openapi();
+
         App::new()
             .wrap(cors) // 添加 CORS 中间件
             .service(get_interfaces)
             .service(get_network_status)
+            .service(
+                SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", openapi.clone()),
+            ) // 添加 Swagger UI，访问地址为 /swagger-ui
     })
     .bind(("127.0.0.1", port))
     .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))?;
