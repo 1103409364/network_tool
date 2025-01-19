@@ -55,8 +55,8 @@ pub fn run() -> std::thread::JoinHandle<()> {
             }
         }
     });
-    // TODO: server 退出是否需要单独处理？windows 点击退出后整个进程退出，依赖操作系统行为？
-    // 运行主事件循环 在此表达式后的代码无法访问
+    // 运行主事件循环 在此表达式后的代码无法访问，阻塞主线程。事件循环退出后，回到主线程继续执行，直到程序退出
+    // server 退出是否需要单独处理？右键点击退出后，事件循环结束，不需要单独处理
     event_loop.run(move |_event, _, control_flow| {
         // 设置事件循环为等待模式，减少 CPU 使用
         *control_flow = winit::event_loop::ControlFlow::Wait;
