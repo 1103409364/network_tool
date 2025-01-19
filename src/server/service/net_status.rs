@@ -60,6 +60,7 @@ pub async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
 }
 
 use tokio::net::TcpStream;
+use tokio::time::Instant;
 
 /// 获取本机网络连接状态。
 ///
@@ -76,8 +77,9 @@ use tokio::net::TcpStream;
 ///   或在发生错误时返回 `InterfaceError`。
 pub async fn get_network_status(target_addr: Option<String>) -> Result<HttpResponse, InterfaceError> {
     let addr = target_addr.unwrap_or_else(|| "www.baidu.com:80".to_string());
-    // 尝试连接到指定地址检查网络连通性
+    let start = Instant::now();
     let connected = TcpStream::connect(&addr).await.is_ok();
+    let latency = start.elapsed().as_millis();
 
     let is_connected = connected;
 
@@ -108,6 +110,7 @@ pub async fn get_network_status(target_addr: Option<String>) -> Result<HttpRespo
     let network_status = NetworkStatus {
         is_connected,
         interface_info,
+        latency: Some(latency),
     };
 
     Ok(HttpResponse::Ok().json(network_status))

@@ -43,6 +43,8 @@ pub struct InterfaceInfo {
 pub struct NetworkStatus {
     /// 是否已连接到互联网
     pub is_connected: bool,
+    /// 网络延迟 (ms)
+    pub latency: Option<u128>,
     /// 当前使用的网络接口信息
     pub interface_info: Option<InterfaceInfo>,
 }
