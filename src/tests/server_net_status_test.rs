@@ -1,25 +1,9 @@
-// use crate::web_server::*;
 use actix_web::{http::StatusCode, App};
-use std::net::TcpListener;
 
-use crate::{common::utils::find_available_port, server::{
+use crate::server::{
     model::net_status::{InterfaceError, InterfaceInfo},
-    service::net_status::get_interfaces,
-}};
-
-#[test]
-fn test_find_available_port() {
-    // 测试正常情况
-    let port = find_available_port(9000, 9100).unwrap();
-    assert!(port >= 9000 && port <= 9100);
-    // 测试端口被占用的情况
-    let listener = TcpListener::bind(("127.0.0.1", port)).unwrap();
-    let next_port = find_available_port(port, port + 1).unwrap();
-    let s = next_port;
-    println!("{s}");
-    assert!(next_port > port);
-    drop(listener);
-}
+    service::net_status::*
+};
 
 #[test]
 fn test_interface_error() {
@@ -35,8 +19,9 @@ fn test_interface_error() {
 async fn test_get_interfaces() {
     // 测试获取接口信息
     let app = actix_web::test::init_service(App::new().service(
-        actix_web::web::resource("/interfaces").route(actix_web::web::get().to(get_interfaces))
-    )).await;
+        actix_web::web::resource("/interfaces").route(actix_web::web::get().to(get_interfaces)),
+    ))
+    .await;
 
     let req = actix_web::test::TestRequest::get()
         .uri("/interfaces")
@@ -73,4 +58,44 @@ fn test_interface_info_serialization() {
     assert!(serialized.contains("test0"));
     assert!(serialized.contains("192.168.1.1"));
     assert!(serialized.contains("true"));
+}
+
+#[actix_web::test]
+async fn test_get_network_status_no_addr() {
+    // 测试不带 addr 参数获取网络连接状态
+    let app = actix_web::test::init_service(
+        App::new().service(
+            actix_web::web::resource("/network_status")
+                .route(actix_web::web::get().to(get_network_status)),
+        ),
+    )
+    .await;
+
+    let req = actix_web::test::TestRequest::get()
+        .uri("/network_status")
+        .to_request();
+
+    let resp = actix_web::test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+}
+
+#[actix_web::test]
+async fn test_get_network_status_with_addr() {
+    // 测试带 addr 参数获取网络连接状态
+    let app = actix_web::test::init_service(
+        App::new().service(
+            actix_web::web::resource("/network_status")
+                .route(actix_web::web::get().to(get_network_status)),
+        ),
+    )
+    .await;
+
+    let req = actix_web::test::TestRequest::get()
+        .uri("/network_status?addr=192.168.1.1")
+        .to_request();
+
+    let resp = actix_web::test::call_service(&app, req).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = actix_web::test::read_body(resp).await;
+    assert!(!body.is_empty());
 }
