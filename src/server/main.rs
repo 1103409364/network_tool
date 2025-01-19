@@ -31,8 +31,8 @@ async fn start_web_server() -> Result<(), InterfaceError> {
                 .expect("failed to execute process");
         }
     }
-    
-    info!("Starting at http://127.0.0.1:{}", port);
+
+    info!("Server starting at http://127.0.0.1:{}", port);
 
     let server = HttpServer::new(|| {
         // 配置 CORS
@@ -49,12 +49,10 @@ async fn start_web_server() -> Result<(), InterfaceError> {
     .bind(("127.0.0.1", port))
     .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))?;
 
-    info!("Web server is ready to accept connections");
-    
     let result = server.run().await;
-    
+
     info!("Web server has stopped");
-    
+
     result.map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))
 }
 
@@ -62,10 +60,10 @@ async fn start_web_server() -> Result<(), InterfaceError> {
 /// 在新线程中启动服务器，避免阻塞主线程
 ///
 /// 如果服务器启动失败，会记录错误信息但不会导致程序崩溃
-pub fn run() {
+pub fn run() -> std::thread::JoinHandle<()> {
     std::thread::spawn(|| {
         if let Err(e) = start_web_server() {
             error!("Failed to start web server: {}", e);
         }
-    });
+    })
 }

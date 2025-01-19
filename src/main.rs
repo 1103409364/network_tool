@@ -1,5 +1,5 @@
 #![windows_subsystem = "windows"] // 在 Windows 上禁用控制台窗口
-use log::{error, info};
+use log::error;
 use single_instance::SingleInstance;
 mod client; // 导入 mod client 模块。
 mod common;
@@ -11,12 +11,11 @@ fn main() {
     // 确保程序只运行一个实例
     let instance = SingleInstance::new("2eHYAHYbarsMt3f").unwrap();
     if !instance.is_single() {
-        error!("程序已经在运行中");
+        error!("The program is already running.");
         return;
     }
     common::log::config();
-    info!("starting...");
     // 启动 Web 服务器
     server::main::run(); // use server::main::run;
-    client::main::run(); // 启动客户端程序
+    client::main::run(); // 启动客户端程序 事件循环阻塞主线程
 }

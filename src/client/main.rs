@@ -1,5 +1,5 @@
-use std::sync::Arc;
 use log::info;
+use std::sync::Arc;
 use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
     Icon, TrayIconBuilder,
@@ -7,7 +7,7 @@ use tray_icon::{
 use winit::event_loop::EventLoop;
 
 // 启动客户端程序
-pub fn run() {
+pub fn run() -> std::thread::JoinHandle<()> {
     // 创建系统托盘菜单
     let tray_menu = Menu::new();
 
@@ -56,11 +56,11 @@ pub fn run() {
         }
     });
     // TODO: server 退出是否需要单独处理？windows 点击退出后整个进程退出，依赖操作系统行为？
-    // 运行主事件循环
+    // 运行主事件循环 在此表达式后的代码无法访问
     event_loop.run(move |_event, _, control_flow| {
         // 设置事件循环为等待模式，减少 CPU 使用
         *control_flow = winit::event_loop::ControlFlow::Wait;
-
+        info!("event_loop running");
         // 检查是否应该退出程序
         if !running.load(std::sync::atomic::Ordering::SeqCst) {
             *control_flow = winit::event_loop::ControlFlow::Exit;
