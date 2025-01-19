@@ -1,10 +1,11 @@
-use crate::server::model::net_status::InterfaceError;
-use crate::server::model::net_status::InterfaceInfo;
+use crate::server::model::net_status::{InterfaceError, InterfaceInfo, NetworkStatus};
 use actix_web::HttpResponse;
 use if_addrs::get_if_addrs;
 use mac_address::mac_address_by_name;
+use std::net::{IpAddr, Ipv4Addr};
+use tokio::process::Command;
+
 /// 返回所有活跃的网络接口信息
-///
 /// # 返回值
 /// - 成功：返回包含接口信息的 JSON 数组
 /// - 失败：返回相应的错误信息
@@ -50,4 +51,51 @@ pub async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
     } else {
         Ok(HttpResponse::Ok().json(interface_infos))
     }
+}
+
+/// 获取本机网络连接状态
+pub async fn get_network_status() -> Result<HttpResponse, InterfaceError> {
+    // 尝试 ping 一个公共的互联网地址来检查连接状态
+    let output = Command::new("ping")
+        .arg("www.baidu.com")
+        .arg("-n") // 指定发送的 Echo 请求数 (Windows)
+        .arg("1")
+        .output()
+        .await
+        .map_err(|e| {
+            InterfaceError::GetIfAddrsError(std::io::Error::new(std::io::ErrorKind::Other, e))
+        })?;
+
+    let is_connected = output.status.success();
+
+    // 获取当前使用的网络接口信息
+    let interfaces = get_if_addrs().map_err(InterfaceError::GetIfAddrsError)?;
+    let active_interface = interfaces.into_iter().find(|interface| {
+        if let IpAddr::V4(ipv4) = interface.addr.ip() {
+            return !interface.is_loopback()
+                && ipv4 != Ipv4Addr::new(0, 0, 0, 0)
+                && ipv4 != Ipv4Addr::new(127, 0, 0, 1)
+                && !ipv4.is_loopback();
+        }
+        false
+    });
+
+    let interface_info = active_interface.and_then(|interface| {
+        mac_address_by_name(&interface.name)
+            .ok()
+            .flatten()
+            .map(|mac| InterfaceInfo {
+                mac_address: Some(mac.to_string()),
+                interface_name: interface.name,
+                ip_address: interface.addr.ip().to_string(),
+                is_active: true,
+            })
+    });
+
+    let network_status = NetworkStatus {
+        is_connected,
+        interface_info,
+    };
+
+    Ok(HttpResponse::Ok().json(network_status))
 }

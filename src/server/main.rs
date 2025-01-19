@@ -1,5 +1,8 @@
 use crate::common::utils;
-use crate::server::{controller::net_status::get_interfaces, model::net_status::InterfaceError};
+use crate::server::{
+    controller::net_status::{get_interfaces, get_network_status},
+    model::net_status::InterfaceError,
+};
 use actix_cors::Cors;
 use actix_web::{App, HttpServer};
 use log::{error, info, warn};
@@ -45,6 +48,7 @@ async fn start_web_server() -> Result<(), InterfaceError> {
         App::new()
             .wrap(cors) // 添加 CORS 中间件
             .service(get_interfaces)
+            .service(get_network_status)
     })
     .bind(("127.0.0.1", port))
     .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))?;

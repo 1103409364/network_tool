@@ -37,3 +37,12 @@ pub struct InterfaceInfo {
     /// 接口是否活跃
     pub is_active: bool,
 }
+
+/// 本机网络连接状态
+#[derive(Serialize)]
+pub struct NetworkStatus {
+    /// 是否已连接到互联网
+    pub is_connected: bool,
+    /// 当前使用的网络接口信息
+    pub interface_info: Option<InterfaceInfo>,
+}

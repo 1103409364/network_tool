@@ -9,3 +9,10 @@ pub async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
     // 调用 server/service/net_status.rs 中的 get_interfaces 函数
     net_status::get_interfaces().await
 }
+
+/// 处理 GET /network_status 请求
+#[get("/network_status")]
+pub async fn get_network_status() -> Result<HttpResponse, InterfaceError> {
+    // 调用 server/service/net_status.rs 中的 get_network_status 函数
+    net_status::get_network_status().await
+}
