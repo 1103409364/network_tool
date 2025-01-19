@@ -46,4 +46,4 @@ strip = true
 actix-rt = "2.8"
 
 [build-dependencies]
-embed-resource = "1.5.1"
+embed-resource = "1.7.2"
