@@ -55,9 +55,10 @@ pub async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
 use tokio::net::TcpStream;
 
 /// 获取本机网络连接状态
-pub async fn get_network_status() -> Result<HttpResponse, InterfaceError> {
-    // 尝试连接到 www.baidu.com:80 检查网络连通性。使用 tokio::process::Command 会弹出终端窗口，所以改用 tokio::net::TcpStream
-    let connected = TcpStream::connect("www.baidu.com:80").await.is_ok();
+pub async fn get_network_status(target_addr: Option<String>) -> Result<HttpResponse, InterfaceError> {
+    let addr = target_addr.unwrap_or_else(|| "www.baidu.com:80".to_string());
+    // 尝试连接到指定地址检查网络连通性
+    let connected = TcpStream::connect(&addr).await.is_ok();
 
     let is_connected = connected;
 
