@@ -60,7 +60,6 @@ pub fn run() -> std::thread::JoinHandle<()> {
     event_loop.run(move |_event, _, control_flow| {
         // 设置事件循环为等待模式，减少 CPU 使用
         *control_flow = winit::event_loop::ControlFlow::Wait;
-        info!("event_loop running");
         // 检查是否应该退出程序
         if !running.load(std::sync::atomic::Ordering::SeqCst) {
             *control_flow = winit::event_loop::ControlFlow::Exit;
