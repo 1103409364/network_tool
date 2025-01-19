@@ -4,10 +4,17 @@ use if_addrs::get_if_addrs;
 use mac_address::mac_address_by_name;
 use std::net::{IpAddr, Ipv4Addr};
 
-/// 返回所有活跃的网络接口信息
+/// 返回所有活跃的网络接口信息。
+///
+/// 此函数获取系统中的所有网络接口，并过滤掉不活跃和本地回环接口。
+/// 它还会尝试获取每个活跃接口的 MAC 地址。
+///
 /// # 返回值
-/// - 成功：返回包含接口信息的 JSON 数组
-/// - 失败：返回相应的错误信息
+///
+/// * `Result<HttpResponse, InterfaceError>`:
+///   - 成功：返回包含 `InterfaceInfo` 结构体的 JSON 数组的 `HttpResponse`。
+///   - 失败：返回 `InterfaceError`，指示获取接口信息时发生的错误，
+///     例如 `GetIfAddrsError` 或 `NoActiveInterfaces`。
 pub async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
     // 获取系统中的所有网络接口
     let interfaces = get_if_addrs().map_err(InterfaceError::GetIfAddrsError)?;
@@ -54,7 +61,19 @@ pub async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
 
 use tokio::net::TcpStream;
 
-/// 获取本机网络连接状态
+/// 获取本机网络连接状态。
+///
+/// 此函数尝试连接到指定的地址（如果提供），否则连接到 www.baidu.com:80，
+/// 以检查网络连通性。它还会尝试获取当前活跃网络接口的信息。
+///
+/// # 参数
+///
+/// * `target_addr` (Option<String>): 可选的目标地址，格式为 "host:port"。
+///
+/// # 返回值
+///
+/// * `Result<HttpResponse, InterfaceError>`:  包含网络连接状态和接口信息的 HTTP 响应，
+///   或在发生错误时返回 `InterfaceError`。
 pub async fn get_network_status(target_addr: Option<String>) -> Result<HttpResponse, InterfaceError> {
     let addr = target_addr.unwrap_or_else(|| "www.baidu.com:80".to_string());
     // 尝试连接到指定地址检查网络连通性
