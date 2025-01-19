@@ -44,3 +44,6 @@ strip = true
 [dev-dependencies]
 # tokio = { version = "1.0", features = ["full"] } # 移入 dependencies
 actix-rt = "2.8"
+
+[build-dependencies]
+embed-resource = "1.5.1"
