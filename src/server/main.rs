@@ -13,6 +13,7 @@ use log::{error, info, warn};
 /// # 错误处理
 /// - 如果指定端口被占用，会尝试使用其他端口
 /// - 在 Windows 系统上，如果端口被占用会显示提示框
+/// - 集成 swagger 会导致 release 包体积增加十几兆，能否只在 debug 模式下集成 swagger？
 #[actix_web::main]
 async fn start_web_server() -> Result<(), InterfaceError> {
     const START: u16 = 9425;
