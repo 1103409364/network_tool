@@ -3,7 +3,6 @@ use actix_web::HttpResponse;
 use if_addrs::get_if_addrs;
 use mac_address::mac_address_by_name;
 use std::net::{IpAddr, Ipv4Addr};
-use tokio::process::Command;
 
 /// 返回所有活跃的网络接口信息
 /// # 返回值
@@ -53,20 +52,14 @@ pub async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
     }
 }
 
+use tokio::net::TcpStream;
+
 /// 获取本机网络连接状态
 pub async fn get_network_status() -> Result<HttpResponse, InterfaceError> {
-    // 尝试 ping 一个公共的互联网地址来检查连接状态
-    let output = Command::new("ping")
-        .arg("www.baidu.com")
-        .arg("-n") // 指定发送的 Echo 请求数 (Windows)
-        .arg("1")
-        .output()
-        .await
-        .map_err(|e| {
-            InterfaceError::GetIfAddrsError(std::io::Error::new(std::io::ErrorKind::Other, e))
-        })?;
+    // 尝试连接到 www.baidu.com:80 检查网络连通性。使用 tokio::process::Command 会弹出终端窗口，所以改用 tokio::net::TcpStream
+    let connected = TcpStream::connect("www.baidu.com:80").await.is_ok();
 
-    let is_connected = output.status.success();
+    let is_connected = connected;
 
     // 获取当前使用的网络接口信息
     let interfaces = get_if_addrs().map_err(InterfaceError::GetIfAddrsError)?;
