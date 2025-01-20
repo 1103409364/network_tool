@@ -35,15 +35,15 @@ name = "network_tool"
 path = "src/main.rs"
 subsystem = "windows"
 
-[profile.release]
-opt-level = "z"
-lto = true
-codegen-units = 1
-strip = true
-
 [dev-dependencies]
 # tokio = { version = "1.0", features = ["full"] } # 移入 dependencies
 actix-rt = "2.8"
 
 [build-dependencies]
 embed-resource = "1.7.2"
+# 启用优化 "z" 被 360 误报
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
