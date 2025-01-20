@@ -1,9 +1,4 @@
-use actix_web::{http::StatusCode, App};
-
-use crate::server::{
-    model::net_status::{InterfaceError, InterfaceInfo},
-    service::net_status::*
-};
+use crate::server::{model::net_status::InterfaceError, service::net_status::*};
 
 #[test]
 fn test_interface_error() {
@@ -15,87 +10,34 @@ fn test_interface_error() {
     assert_eq!(err.to_string(), "Failed to find available port");
 }
 
-#[actix_web::test]
-async fn test_get_interfaces() {
-    // 测试获取接口信息
-    let app = actix_web::test::init_service(App::new().service(
-        actix_web::web::resource("/interfaces").route(actix_web::web::get().to(get_interfaces)),
-    ))
-    .await;
-
-    let req = actix_web::test::TestRequest::get()
-        .uri("/interfaces")
-        .to_request();
-
-    let resp = actix_web::test::call_service(&app, req).await;
-
-    match resp.status() {
-        StatusCode::OK => {
-            let body = actix_web::test::read_body(resp).await;
-            assert!(!body.is_empty());
+#[test]
+fn test_get_interface_infos() {
+    let result = get_interface_infos();
+    assert!(result.is_ok());
+    if let Ok(infos) = result {
+        // 至少应该返回一个网络接口信息
+        assert!(!infos.is_empty());
+        // 检查返回的 InterfaceInfo 中的字段是否被正确填充 (只做基本类型检查)
+        for info in infos {
+            assert!(!info.interface_name.is_empty());
+            assert!(info.mac_address.is_some());
+            assert!(!info.ip_address.is_empty());
+            assert_eq!(info.is_active, true);
         }
-        StatusCode::INTERNAL_SERVER_ERROR => {
-            // 如果没有活跃接口的情况
-            let error_body = actix_web::test::read_body(resp).await;
-            assert!(!error_body.is_empty());
-        }
-        _ => panic!("意外的状态码: {}", resp.status()),
     }
 }
 
-#[test]
-fn test_interface_info_serialization() {
-    // 测试 InterfaceInfo 结构体的序列化
-    let info = InterfaceInfo {
-        mac_address: Some("00:11:22:33:44:55".to_string()),
-        interface_name: "test0".to_string(),
-        ip_address: "192.168.1.1".to_string(),
-        is_active: true,
-    };
-
-    let serialized = serde_json::to_string(&info).unwrap();
-    assert!(serialized.contains("00:11:22:33:44:55"));
-    assert!(serialized.contains("test0"));
-    assert!(serialized.contains("192.168.1.1"));
-    assert!(serialized.contains("true"));
-}
-
-#[actix_web::test]
-async fn test_get_network_status_no_addr() {
-    // 测试不带 addr 参数获取网络连接状态
-    let app = actix_web::test::init_service(
-        App::new().service(
-            actix_web::web::resource("/network_status")
-                .route(actix_web::web::get().to(get_network_status)),
-        ),
-    )
-    .await;
-
-    let req = actix_web::test::TestRequest::get()
-        .uri("/network_status")
-        .to_request();
-
-    let resp = actix_web::test::call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::OK);
-}
-
-#[actix_web::test]
-async fn test_get_network_status_with_addr() {
-    // 测试带 addr 参数获取网络连接状态
-    let app = actix_web::test::init_service(
-        App::new().service(
-            actix_web::web::resource("/network_status")
-                .route(actix_web::web::get().to(get_network_status)),
-        ),
-    )
-    .await;
-
-    let req = actix_web::test::TestRequest::get()
-        .uri("/network_status?addr=192.168.1.1")
-        .to_request();
-
-    let resp = actix_web::test::call_service(&app, req).await;
-    assert_eq!(resp.status(), StatusCode::OK);
-    let body = actix_web::test::read_body(resp).await;
-    assert!(!body.is_empty());
+#[tokio::test]
+async fn test_get_network_status() {
+    let result = get_network_status(None).await;
+    assert!(result.is_ok());
+    if let Ok(status) = result {
+        // 检查是否连接到互联网 (这个测试在没有网络连接的情况下可能会失败)
+        // 在实际的测试中，可能需要 mock 网络连接
+        assert_eq!(status.is_connected, true);
+        // 检查延迟是否存在
+        assert!(status.latency.is_some());
+        // 检查接口信息是否返回
+        assert!(!status.interface_infos.is_empty());
+    }
 }

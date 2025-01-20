@@ -46,5 +46,10 @@ pub struct NetworkStatus {
     /// 网络延迟 (ms)
     pub latency: Option<u128>,
     /// 当前使用的网络接口信息
-    pub interface_info: Option<InterfaceInfo>,
+    pub interface_infos: Vec<InterfaceInfo>,
+}
+/// 查询参数的数据结构
+#[derive(serde::Deserialize)]
+pub struct NetworkStatusParams {
+    pub addr: Option<String>,
 }
