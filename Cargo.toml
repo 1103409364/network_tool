@@ -55,5 +55,5 @@ thiserror = "2.0.11" # 错误处理库
 # actix-rt = "2.10.0" # 为 Actix 生态系统量身打造的东京单线程异步运行时
 
 [build-dependencies]
-embed-resource = "1.7.2"
+embed-resource = "3.0.1" # 一个 Cargo 库，以尽可能稳健的方式处理 Windows 资源的编译和包含。
 
