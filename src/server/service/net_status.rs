@@ -3,6 +3,8 @@ use actix_web::HttpResponse;
 use if_addrs::get_if_addrs;
 use mac_address::mac_address_by_name;
 use std::net::{IpAddr, Ipv4Addr};
+use tokio::net::TcpStream;
+use tokio::time::Instant;
 
 /// 返回所有活跃的网络接口信息。
 ///
@@ -58,9 +60,6 @@ pub async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
         Ok(HttpResponse::Ok().json(interface_infos))
     }
 }
-
-use tokio::net::TcpStream;
-use tokio::time::Instant;
 
 /// 获取本机网络连接状态。
 ///
