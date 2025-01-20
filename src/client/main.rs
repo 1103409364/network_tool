@@ -4,10 +4,39 @@ use tray_icon::{
     menu::{Menu, MenuEvent, MenuItem},
     Icon, TrayIconBuilder,
 };
-use winit::event_loop::EventLoop;
+use winit::{
+    application::ApplicationHandler,
+    event::WindowEvent,
+    event_loop::{ActiveEventLoop, EventLoop},
+    window::WindowId,
+};
+
+// 添加 Default 以便App::default()来快速创建App实例
+#[derive(Default)]
+pub struct App {
+    running: Arc<std::sync::atomic::AtomicBool>, // 是否运行中 Arc 用于多线程共享 AtomicBool 用于原子操作
+                                                 // window: Option<winit::window::Window>, // 不需要窗口，这里这是利用事件循环退出程序
+}
+
+impl ApplicationHandler for App {
+    // 当应用程序恢复运行时发出此信号。没有默认实现，所以必须实现
+    fn resumed(&mut self, _: &ActiveEventLoop) {}
+    // 当操作系统向 winit 窗口发送事件时触发。没有默认实现，所以必须实现
+    fn window_event(&mut self, _: &ActiveEventLoop, _: WindowId, _: WindowEvent) {}
+    // 当事件循环即将阻塞并等待新事件时发出。也可以使用 new_events：当操作系统有新的事件需要处理时，会触发此信号。
+    fn about_to_wait(&mut self, event_loop: &ActiveEventLoop) {
+        if !self.running.load(std::sync::atomic::Ordering::SeqCst) {
+            event_loop.exit(); // 如果程序退出，退出事件循环
+        }
+    }
+    // 当事件循环正在关闭时发出。
+    fn exiting(&mut self, _: &ActiveEventLoop) {
+        info!("exiting");
+    }
+}
 
 // 启动客户端程序
-pub fn run() -> std::thread::JoinHandle<()> {
+pub fn run() {
     // 创建系统托盘菜单
     let tray_menu = Menu::new();
 
@@ -36,9 +65,6 @@ pub fn run() -> std::thread::JoinHandle<()> {
     // 将托盘图标包装在 Arc 中以在多个线程间共享
     let _tray_icon = Arc::new(tray_icon);
 
-    // 创建事件循环，用于处理系统事件
-    let event_loop = EventLoop::new();
-
     // 处理菜单事件
     let menu_channel = MenuEvent::receiver();
     let running = Arc::new(std::sync::atomic::AtomicBool::new(true));
@@ -48,21 +74,25 @@ pub fn run() -> std::thread::JoinHandle<()> {
     std::thread::spawn(move || {
         while let Ok(event) = menu_channel.recv() {
             if event.id == quit_id {
-                info!("exit");
                 // 如果点击了退出菜单项
                 running_clone.store(false, std::sync::atomic::Ordering::SeqCst);
                 break;
             }
         }
     });
-    // 运行主事件循环 在此表达式后的代码无法访问，阻塞主线程。事件循环退出后，回到主线程继续执行，直到程序退出
-    // server 退出是否需要单独处理？右键点击退出后，事件循环结束，不需要单独处理
-    event_loop.run(move |_event, _, control_flow| {
-        // 设置事件循环为等待模式，减少 CPU 使用
-        *control_flow = winit::event_loop::ControlFlow::Wait;
-        // 检查是否应该退出程序
-        if !running.load(std::sync::atomic::Ordering::SeqCst) {
-            *control_flow = winit::event_loop::ControlFlow::Exit;
+
+    // 创建事件循环，用于处理系统事件
+    let event_loop = match EventLoop::new() {
+        Ok(event_loop) => event_loop,
+        Err(err) => {
+            log::error!("创建事件循环失败：{}", err);
+            std::process::exit(1);
         }
-    });
+    };
+
+    let mut app = App {
+        running: running.clone(),
+    };
+    // 运行主事件循环 在此表达式后的代码无法访问，阻塞主线程。事件循环退出后，回到主线程继续执行，直到程序退出
+    event_loop.run_app(&mut app).expect("run app error."); // 0.2x 版本的 run 方法已经被废弃，使用 run_app 方法
 }

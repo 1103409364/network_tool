@@ -3,47 +3,57 @@ name = "network_tool"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
-tokio = { version = "1", features = ["macros", "rt-multi-thread", "process"] }
-single-instance = "0.3"
-tray-icon = "0.11"
-# window-vibrancy = "0.4"  # 移除不必要的依赖
-# window-shadows = "0.2"  # 移除不必要的依赖
-# image = "0.24"  # image 库，当图片为非 rgba 格式时需要，用于将图片转换为 rgba 格式
-winit = "0.28"
-# get_interfaces 依赖
-mac_address = "1.1"
-actix-web = "4.4"
-serde = { version = "1.0", features = ["derive"] }
-serde_json = "1.0"
-if-addrs = "0.10.1"
-open = "3.2"
-actix-cors = "0.6"
-# 日志依赖
-log = "0.4"
-simplelog = "0.12"
-chrono = "0.4"
-# 错误处理依赖
-thiserror = "1.0"
-
-[dependencies.windows]
-version = "0.48"
-features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"]
-
-[[bin]]
+[[bin]] # 二进制文件
 name = "network_tool"
 path = "src/main.rs"
 subsystem = "windows"
 
-[dev-dependencies]
-# tokio = { version = "1.0", features = ["full"] } # 移入 dependencies
-actix-rt = "2.8"
-
-[build-dependencies]
-embed-resource = "1.7.2"
 # 启用优化 "z" 被 360 误报，改为 s，upx 压缩 360 未报毒 https://github.com/upx/upx/releases
 [profile.release]
 opt-level = "s"
 lto = true
 codegen-units = 1
 strip = true
+
+[dependencies]
+# client
+tray-icon = "0.19.2"
+# window-vibrancy = "0.4"  # 移除不必要的依赖
+# window-shadows = "0.2"  # 移除不必要的依赖
+# image = "0.24"  # image 库，当图片为非 rgba 格式时需要，用于将图片转换为 rgba 格式
+winit = "0.30.8" # 跨平台窗口管理
+# windows ={ version = "0.59.0", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] } # windows 窗口库
+
+# server
+tokio = { version = "1.43.0", features = [
+  "macros",
+  "rt-multi-thread",
+  "process",
+] }
+single-instance = "0.3.3"
+
+# get_interfaces 依赖
+mac_address = "1.1.7"                                  # 跨平台获取网络接口的 MAC 地址。
+actix-web = "4.9"                                      # 功能强大、务实且速度极快的 Rust Web 框架。
+actix-cors = "0.7.0"
+serde = { version = "1.0.217", features = ["derive"] } # 序列化和反序列化库
+# serde_json = "1.0.137" # JSON 序列化和反序列化库  
+if-addrs = "0.13.3" # 获取本地网络接口信息
+open = "5.3.2"      # 打开文件、文件夹、网址等
+# 日志依赖
+log = "0.4.25"       # 日志库
+simplelog = "0.12.2" # 简单的日志库
+chrono = "0.4.39"   # 时间库
+# 错误处理依赖
+thiserror = "2.0.11" # 错误处理库
+
+# [dependencies.windows]
+# version = "0.59.0"
+# features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"]
+
+# [dev-dependencies]
+# actix-rt = "2.10.0" # 为 Actix 生态系统量身打造的东京单线程异步运行时
+
+[build-dependencies]
+embed-resource = "1.7.2"
+
