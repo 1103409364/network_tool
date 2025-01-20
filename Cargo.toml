@@ -41,7 +41,7 @@ actix-rt = "2.8"
 
 [build-dependencies]
 embed-resource = "1.7.2"
-# 启用优化 "z" 被 360 误报
+# 启用优化 "z" 被 360 误报，改为 s，upx 压缩 360 未报毒 https://github.com/upx/upx/releases
 [profile.release]
 opt-level = "s"
 lto = true
