@@ -20,6 +20,12 @@ pub enum InterfaceError {
     /// 未找到可用的端口
     #[error("Failed to find available port")]
     NoAvailablePort,
+
+    #[error("Permission denied")]
+    PermissionDenied,
+
+    #[error("{0}")]
+    Unknown(String),
 }
 
 impl actix_web::ResponseError for InterfaceError {}
