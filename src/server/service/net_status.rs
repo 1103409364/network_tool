@@ -22,15 +22,15 @@ pub async fn get_interfaces() -> Result<HttpResponse, InterfaceError> {
     // 将接口列表转换为 InterfaceInfo 结构的 Vec
     let interface_infos: Vec<InterfaceInfo> = interfaces
         .into_iter()
-        // 过滤掉不活跃和本地回环接口
+        // 过滤掉不活跃和本地回环接口，以及 IPv6 地址
         .filter(|interface| {
-            let ip = interface.addr.ip().to_string();
-            !interface.is_loopback()  // 过滤掉回环接口
-                && ip != "0.0.0.0"    // 过滤掉未配置 IP 的接口
-                && ip != "127.0.0.1"  // 过滤掉 IPv4 回环地址
-                // && ip != "::1"        // 过滤掉 IPv6 回环地址
-                // 过滤掉 IPv6 地址，判断包含冒号的情况
-                && !ip.contains(':')
+            if let IpAddr::V4(ipv4) = interface.addr.ip() {
+                return !interface.is_loopback()
+                    && ipv4 != Ipv4Addr::new(0, 0, 0, 0)
+                    && ipv4 != Ipv4Addr::new(127, 0, 0, 1)
+                    && !ipv4.is_loopback();
+            }
+            false
         })
         // 过滤并映射：只保留能获取到 MAC 地址的接口
         .filter_map(|interface| {
@@ -75,7 +75,9 @@ use tokio::time::Instant;
 ///
 /// * `Result<HttpResponse, InterfaceError>`:  包含网络连接状态和接口信息的 HTTP 响应，
 ///   或在发生错误时返回 `InterfaceError`。
-pub async fn get_network_status(target_addr: Option<String>) -> Result<HttpResponse, InterfaceError> {
+pub async fn get_network_status(
+    target_addr: Option<String>,
+) -> Result<HttpResponse, InterfaceError> {
     let addr = target_addr.unwrap_or_else(|| "www.baidu.com:80".to_string());
     let start = Instant::now();
     let connected = TcpStream::connect(&addr).await.is_ok();
