@@ -4,6 +4,7 @@ use thiserror::Error;
 
 /// 定义应用程序可能遇到的错误类型
 #[derive(Error, Debug)]
+#[allow(dead_code)]
 pub enum InterfaceError {
     /// 获取网络接口信息失败
     #[error("Failed to get network interfaces: {0}")]
