@@ -4,7 +4,7 @@ use crate::server::{
     model::net_status::InterfaceError,
 };
 use actix_cors::Cors;
-use actix_web::{App, HttpServer};
+use actix_web::{rt, App, HttpServer};
 use log::{error, info, warn};
 
 /// Web 服务器的主入口函数
@@ -14,7 +14,6 @@ use log::{error, info, warn};
 /// - 如果指定端口被占用，会尝试使用其他端口
 /// - 在 Windows 系统上，如果端口被占用会显示提示框
 /// - 集成 swagger 会导致 release 包体积增加十几兆，能否只在 debug 模式下集成 swagger？
-#[actix_web::main]
 async fn start_web_server() -> Result<(), InterfaceError> {
     const START: u16 = 9425;
     let port = utils::find_available_port(START, 9898)?;
@@ -67,8 +66,17 @@ async fn start_web_server() -> Result<(), InterfaceError> {
 /// 如果服务器启动失败，会记录错误信息但不会导致程序崩溃
 pub fn run() -> std::thread::JoinHandle<()> {
     std::thread::spawn(|| {
-        if let Err(e) = start_web_server() {
-            error!("Failed to start web server: {}", e);
+        if let Ok(rt) = rt::Runtime::new() {
+            rt.block_on(async {
+                if let Err(e) = start_web_server().await {
+                    error!("Failed to start web server: {}", e);
+                }
+            });
+        } else {
+            // 注意：这里为了获取错误 `e`，再次调用了 `rt::Runtime::new()`，略有冗余，更好的方式见方法3
+            error!("Failed to create Actix runtime");
+            // 错误处理逻辑，例如退出程序
+            std::process::exit(1);
         }
     })
 }
