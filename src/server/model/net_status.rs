@@ -22,6 +22,10 @@ pub enum InterfaceError {
     #[error("Failed to find available port")]
     NoAvailablePort,
 
+    /// 达到最大重试次数
+    #[error("Maximum port retry attempts exceeded")]
+    MaxRetriesExceeded,
+
     #[error("Permission denied")]
     PermissionDenied,
 
@@ -55,6 +59,7 @@ pub struct NetworkStatus {
     /// 当前使用的网络接口信息
     pub interface_infos: Vec<InterfaceInfo>,
 }
+
 /// 查询参数的数据结构
 #[derive(serde::Deserialize)]
 pub struct NetworkStatusParams {
