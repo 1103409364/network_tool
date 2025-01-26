@@ -13,7 +13,7 @@ pub fn config() {
 
     // 使用当前日期和时间作为日志文件名，格式：network_tool_YYYY-MM-DD_HH-MM-SS.log
     let current_date = Local::now().format("%Y-%m-%d_%H-%M-%S").to_string();
-    let log_file_path = log_dir.join(format!("network_tool_{}.log", current_date));
+    let log_file_path = log_dir.join(format!("log_{}.log", current_date));
 
     // 配置并初始化日志系统
     let log_file = File::create(log_file_path).unwrap();
