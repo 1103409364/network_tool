@@ -56,4 +56,4 @@ thiserror = "2.0.11" # 错误处理库
 
 [build-dependencies]
 embed-resource = "3.0.1" # 一个 Cargo 库，以尽可能稳健的方式处理 Windows 资源的编译和包含。
-
+built = "0.7" # 在编译时提供有关 crate 的信息
