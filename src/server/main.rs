@@ -46,9 +46,12 @@ fn show_port_error_dialog() {
 /// - 优雅处理服务器启动和关闭
 async fn start_web_server() -> Result<(), InterfaceError> {
     let port = utils::find_available_port(DEFAULT_PORT, MAX_PORT, MAX_RETRIES)?;
-    
+
     if port != DEFAULT_PORT {
-        warn!("Port {} is not available, using port {}", DEFAULT_PORT, port);
+        warn!(
+            "Port {} is not available, using port {}",
+            DEFAULT_PORT, port
+        );
         #[cfg(target_os = "windows")]
         show_port_error_dialog();
     }
@@ -67,7 +70,7 @@ async fn start_web_server() -> Result<(), InterfaceError> {
 
     let result = server.run().await;
     info!("Web server has stopped");
-    
+
     result.map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))
 }
 
@@ -77,16 +80,11 @@ async fn start_web_server() -> Result<(), InterfaceError> {
 /// 如果服务器启动失败，会记录错误信息但不会导致程序崩溃
 pub fn run() -> std::thread::JoinHandle<()> {
     std::thread::spawn(|| {
-        match rt::Runtime::new() {
-            Ok(rt) => rt.block_on(async {
-                if let Err(e) = start_web_server().await {
-                    error!("Failed to start web server: {}", e);
-                }
-            }),
-            Err(e) => {
-                error!("Failed to create Actix runtime: {}", e);
-                std::process::exit(1);
+        let rt = rt::System::new();
+        rt.block_on(async {
+            if let Err(e) = start_web_server().await {
+                error!("Actix-web server error: {}", e);
             }
-        }
+        });
     })
 }
