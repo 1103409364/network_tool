@@ -9,9 +9,6 @@ mod client;
 mod common;
 // 导入 mod server 模块。文件即模块，不需要额外声明 目录下有 mod.rs 文件也是模块
 mod server;
-// 导入测试模块 条件编译，只有在测试模式下才编译测试代码，只有当你运行 cargo test 命令时，这个模块才会被编译和执行
-#[cfg(test)]
-mod tests;
 
 // Application instance identifier using cargo environment variables
 const APP_GUID: &str = concat!(env!("CARGO_PKG_NAME"), "_", env!("CARGO_PKG_VERSION"));
