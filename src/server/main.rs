@@ -1,8 +1,5 @@
 use crate::common::utils;
-use crate::server::{
-    controller::net_status::{get_interfaces, get_network_status},
-    model::net_status::InterfaceError,
-};
+use crate::server::{model::net_status::InterfaceError, router};
 use actix_cors::Cors;
 use actix_web::{rt, App, HttpServer};
 use log::{error, info, warn};
@@ -22,7 +19,7 @@ fn configure_cors() -> Cors {
         .max_age(3600)
 }
 
-/// 在Windows系统上显示端口被占用的提示
+/// 在Windows系统上显示端口被占用的提示。TODO:或者启动时上报当前使用的端口
 #[cfg(target_os = "windows")]
 fn show_port_error_dialog() {
     use std::process::Command;
@@ -59,10 +56,10 @@ async fn start_web_server() -> Result<(), InterfaceError> {
     info!("Server starting at http://{}:{}", BIND_ADDRESS, port);
 
     let server = HttpServer::new(|| {
-        App::new()
-            .wrap(configure_cors())
-            .service(get_interfaces)
-            .service(get_network_status)
+        let app = App::new().wrap(configure_cors());
+
+        // 配置所有路由
+        app.configure(router::net_status::register_routes)
     })
     .bind((BIND_ADDRESS, port))
     .map_err(|e| InterfaceError::GetIfAddrsError(std::io::Error::from(e)))?
