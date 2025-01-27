@@ -16,10 +16,15 @@ mod tests;
 // Application instance identifier using cargo environment variables
 const APP_GUID: &str = concat!(env!("CARGO_PKG_NAME"), "_", env!("CARGO_PKG_VERSION"));
 
+include!(concat!(env!("OUT_DIR"), "/built.rs"));
+
 fn main() {
     // 初始化日志配置
     common::log::config();
-    info!("APP_GUID: {}", APP_GUID);
+    info!("Build Time UTC: {}", BUILT_TIME_UTC);
+    info!("Git Version: {}", GIT_VERSION.unwrap_or("unknown"));
+    info!("Target: {}", TARGET);
+    // info!("APP_GUID: {}", APP_GUID);
     // Ensure only one instance is running
     let instance = match SingleInstance::new(APP_GUID) {
         Ok(instance) => instance,
