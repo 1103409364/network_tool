@@ -1,6 +1,7 @@
 use std::net::TcpListener;
 
-use crate::common::utils::*;
+// 直接使用 crate 根路径引用
+use network_tool::common::utils::find_available_port;
 
 #[test]
 fn test_find_available_port() {
@@ -10,8 +11,6 @@ fn test_find_available_port() {
     // 测试端口被占用的情况
     let listener = TcpListener::bind(("127.0.0.1", port)).unwrap();
     let next_port = find_available_port(port, port + 1, 100).unwrap();
-    let s = next_port;
-    println!("{s}");
     assert!(next_port > port);
     drop(listener);
 }

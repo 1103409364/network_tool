@@ -1,4 +1,5 @@
-use crate::server::{model::net_status::InterfaceError, service::net_status::*};
+use network_tool::server::model::net_status::InterfaceError;
+use network_tool::server::service::net_status::*;
 
 #[test]
 fn test_interface_error() {
@@ -96,6 +97,9 @@ async fn test_get_network_status_with_specific_interface() {
         assert_eq!(status.is_connected, true);
         assert!(status.latency.is_some());
         assert!(!status.interface_infos.is_empty());
-        assert!(status.interface_infos.iter().any(|info| info.interface_name == "eth0"));
+        assert!(status
+            .interface_infos
+            .iter()
+            .any(|info| info.interface_name == "eth0"));
     }
 }
